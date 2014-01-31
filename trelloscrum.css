@@ -41,6 +41,18 @@
   padding: 0 4px 0 17px !important;
 }
 
+.badge-number {
+  background-color: #c0392b !important;
+  border-color: #005b72 !important;
+  border-bottom-color: #004b5f !important;
+  color: #e1fafb !important;
+  float: left;
+  font-size: 21px;
+  line-height: 16px;
+  text-align: center;
+  padding: 4px !important;
+}
+
 .picker {
   float: right;
   padding-top: 5px;
@@ -67,6 +79,10 @@
 }
 
 .badge-points:empty {
+  display: none;
+}
+
+.badge-number:empty {
   display: none;
 }
 

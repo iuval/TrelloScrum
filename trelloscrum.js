@@ -60,6 +60,7 @@ refreshSettings(); // get the settings right away (may take a little bit if usin
 //internals
 var reg = /((?:^|\s))\((\x3f|\d*\.?\d+)(\))\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by ()
     regC = /((?:^|\s))\[(\x3f|\d*\.?\d+)(\])\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by []
+    regN = /((?:^|\s))\*(\x3f|\d*\.?\d+)(\*)\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by **
     iconUrl, pointsDoneUrl,
   flameUrl, flame18Url,
   scrumLogoUrl, scrumLogo18Url;
@@ -580,13 +581,16 @@ function ListCard(el, identifier){
   el.listCard[identifier]=this;
 
   var points=-1,
+    card_number = -1,
     consumed=identifier!=='points',
     regexp=consumed?regC:reg,
     parsed,
+    number_parsed,
     that=this,
     busy=false,
     $card=$(el),
     $badge=$('<div class="badge badge-points point-count" style="background-image: url('+iconUrl+')"/>'),
+    $number_badge=$('<div class="badge badge-number"/>'),
     to,
     to2;
 
@@ -612,11 +616,15 @@ function ListCard(el, identifier){
         // New card title, so we have to parse this new info to find the new amount of points.
         parsed=titleTextContent.match(regexp);
         points=parsed?parsed[2]:-1;
+        number_parsed=titleTextContent.match(regN);
+        card_number=number_parsed?number_parsed[2]:-1;
       } else {
         // Title text has already been parsed... process the pre-parsed title to get the correct points.
         var origTitle = $title.data('orig-title');
         parsed=origTitle.match(regexp);
         points=parsed?parsed[2]:-1;
+        number_parsed=origTitle.match(regN);
+        card_number=number_parsed?number_parsed[2]:-1;
       }
 
       clearTimeout(to2);
@@ -627,12 +635,18 @@ function ListCard(el, identifier){
           [(consumed?'add':'remove')+'Class']('consumed')
           .attr({title: 'This card has '+that.points+ (consumed?' consumed':'')+' storypoint' + (that.points == 1 ? '.' : 's.')})
           .prependTo($card.find('.badges'));
-
+        if(consumed){
+          // Add the number badge to the badges div.
+          $number_badge
+            .text(that.card_number)
+            .attr({title: 'Card number '+that.card_number})
+            .prependTo($card);
+        }
         // Update the DOM element's textContent and data if there were changes.
         if(titleTextContent != parsedTitle){
           $title.data('orig-title', titleTextContent); // store the non-mutilated title (with all of the estimates/time-spent in it).
         }
-        parsedTitle = $.trim(el._title.replace(reg,'$1').replace(regC,'$1'));
+        parsedTitle = $.trim(el._title.replace(reg,'$1').replace(regC,'$1').replace(regN,'$1'));
         el._title = parsedTitle;
         $title.data('parsed-title', parsedTitle); // save it to the DOM element so that both badge-types can refer back to it.
         $title[0].childNodes[1].textContent = parsedTitle;
@@ -647,6 +661,10 @@ function ListCard(el, identifier){
 
   this.__defineGetter__('points',function(){
     return parsed?points:''
+  });
+
+  this.__defineGetter__('card_number',function(){
+    return number_parsed?card_number:''
   });
 
   var cardShortIdObserver = new CrossBrowser.MutationObserver(function(mutations){
