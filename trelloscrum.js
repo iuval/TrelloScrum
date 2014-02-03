@@ -43,9 +43,7 @@ var debounce = function (func, threshold, execAsap) {
 var obsConfig = { childList: true, characterData: true, attributes: false, subtree: true };
 
 //default story point picker sequence (can be overridden in the Scrum for Trello 'Settings' popup)
-var _pointSeq = ['?', 0, .5, 1, 2, 3, 5, 8, 13, 21];
-//attributes representing points values for card
-var _pointsAttr = ['cpoints', 'points'];
+var _pointSeq = ['?', 0, 1, 2, 3, 5, 8, 13, 21];
 
 // All settings and their defaults.
 var S4T_SETTINGS = [];
@@ -59,8 +57,7 @@ refreshSettings(); // get the settings right away (may take a little bit if usin
 
 //internals
 var reg = /((?:^|\s))\((\x3f|\d*\.?\d+)(\))\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by ()
-    regC = /((?:^|\s))\[(\x3f|\d*\.?\d+)(\])\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by []
-    regN = /((?:^|\s))\*(\x3f|\d*\.?\d+)(\*)\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by **
+    regN = /((?:^|\s))\[(\x3f|\d*\.?\d+)(\])\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by []
     iconUrl, pointsDoneUrl,
   flameUrl, flame18Url,
   scrumLogoUrl, scrumLogo18Url;
@@ -161,22 +158,20 @@ var recalcTotalsObserver = new CrossBrowser.MutationObserver(function(mutations)
         ))
     {
       if($target.hasClass('badge')){
-                if(!$target.hasClass("consumed")){
-            refreshJustTotals = true;
-                }
+          refreshJustTotals = true;
       } else {
         // It appears this was an actual modification and not a recursive notification.
         doFullRefresh = true;
       }
     }
   });
-  
+
   if(doFullRefresh){
     recalcListAndTotal();
   } else if(refreshJustTotals){
     calcListPoints();
   }
-    
+
     $editControls = $(".card-detail-title .edit-controls");
     if($editControls.length > 0)
     {
@@ -444,17 +439,21 @@ function computeTotal(){
     if ($total.length == 0)
       $total = $('<span/>', {class: "list-total"}).appendTo($title);
 
-    for (var i in _pointsAttr){
-      var score = 0,
-        attr = _pointsAttr[i];
-      $('#board .list-total .'+attr).each(function(){
+      var score = 0;
+      $("#board .list-header:not(:contains('DONE')) .list-total .points").each(function(){
         score+=parseFloat(this.textContent)||0;
       });
-      var scoreSpan = $('<span/>', {class: attr}).text(round(score)||'');
+
+      var done_score = 0;
+      $("#board .list-header:contains('DONE') .list-total .points").each(function(){
+        done_score+=parseFloat(this.textContent)||0;
+      });
+      var total_points = round(score+done_score)
+      total_points = total_points<0?0:total_points;
+      var scoreSpan = $('<span/>', {class: 'points'})
+        .text('T: '+total_points+' / D: '+round(done_score)+' / R: '+round(score)||'');
       $total.append(scoreSpan);
-    }
-        
-        updateBurndownLink(); // the burndown link and the total are on the same bar... so now they'll be in sync as to whether they're both there or not.
+      updateBurndownLink(); // the burndown link and the total are on the same bar... so now they'll be in sync as to whether they're both there or not.
   });
 };
 
@@ -487,10 +486,10 @@ function List(el){
       $c = $($c.target).filter('.list-card:not(.placeholder)');
     }
     $c.each(function(){
-      if(!this.listCard) for (var i in _pointsAttr)
-        new ListCard(this,_pointsAttr[i]);
-      else for (var i in _pointsAttr)
-        setTimeout(this.listCard[_pointsAttr[i]].refresh);
+      if(!this.listCard)
+        new ListCard(this);
+      else
+        setTimeout(this.listCard.refresh);
     });
   };
 
@@ -504,30 +503,27 @@ function List(el){
     clearTimeout(to);
     to = setTimeout(function(){
       $total.empty().appendTo($list.find('.list-title,.list-header'));
-      for (var i in _pointsAttr){
-        var score=0,
-          attr = _pointsAttr[i];
-        $list.find('.list-card:not(.placeholder)').each(function(){
-          if(!this.listCard) return;
-          if(!isNaN(Number(this.listCard[attr].points))){
-            // Performance note: calling :visible in the selector above leads to noticible CPU usage.
-            if(jQuery.expr.filters.visible(this)){
-              score+=Number(this.listCard[attr].points);
-            }
+      var score=0;
+      $list.find('.list-card:not(.placeholder)').each(function(){
+        if(!this.listCard) return;
+        if(!isNaN(Number(this.listCard.points))){
+          // Performance note: calling :visible in the selector above leads to noticible CPU usage.
+          if(jQuery.expr.filters.visible(this)){
+            score+=Number(this.listCard.points);
           }
-        });
-        var scoreTruncated = round(score);
-        var scoreSpan = $('<span/>', {class: attr}).text( (scoreTruncated>0) ? scoreTruncated : '' );
-        $total.append(scoreSpan);
-        computeTotal();
-      }
+        }
+      });
+      var scoreTruncated = round(score);
+      var scoreSpan = $('<span/>', {class: 'points'}).text( (scoreTruncated>0) ? scoreTruncated : '' );
+      $total.append(scoreSpan);
+      computeTotal();
     });
   };
     
-    this.refreshList = debounce(function(){
-        readCard($list.find('.list-card:not(.placeholder)'));
-            this.calc(); // readCard will call this.calc() if any of the cards get refreshed.
-    }, 500, false);
+  this.refreshList = debounce(function(){
+    readCard($list.find('.list-card:not(.placeholder)'));
+    this.calc(); // readCard will call this.calc() if any of the cards get refreshed.
+  }, 500, false);
 
   var cardAddedRemovedObserver = new CrossBrowser.MutationObserver(function(mutations)
   {
@@ -571,19 +567,13 @@ function List(el){
 };
 
 //.list-card pseudo
-function ListCard(el, identifier){
-  if(el.listCard && el.listCard[identifier]) return;
+function ListCard(el){
+  if(el.listCard) return;
 
-  //lazily create object
-  if (!el.listCard){
-    el.listCard={};
-  }
-  el.listCard[identifier]=this;
+  el.listCard=this;
 
   var points=-1,
     card_number = -1,
-    consumed=identifier!=='points',
-    regexp=consumed?regC:reg,
     parsed,
     number_parsed,
     that=this,
@@ -614,14 +604,14 @@ function ListCard(el, identifier){
       var parsedTitle = $title.data('parsed-title'); 
       if(titleTextContent != parsedTitle){
         // New card title, so we have to parse this new info to find the new amount of points.
-        parsed=titleTextContent.match(regexp);
+        parsed=titleTextContent.match(reg);
         points=parsed?parsed[2]:-1;
         number_parsed=titleTextContent.match(regN);
         card_number=number_parsed?number_parsed[2]:-1;
       } else {
         // Title text has already been parsed... process the pre-parsed title to get the correct points.
         var origTitle = $title.data('orig-title');
-        parsed=origTitle.match(regexp);
+        parsed=origTitle.match(reg);
         points=parsed?parsed[2]:-1;
         number_parsed=origTitle.match(regN);
         card_number=number_parsed?number_parsed[2]:-1;
@@ -632,21 +622,18 @@ function ListCard(el, identifier){
         // Add the badge (for this point-type: regular or consumed) to the badges div.
         $badge
           .text(that.points)
-          [(consumed?'add':'remove')+'Class']('consumed')
-          .attr({title: 'This card has '+that.points+ (consumed?' consumed':'')+' storypoint' + (that.points == 1 ? '.' : 's.')})
+          .attr({title: 'This card has '+that.points+' storypoint' + (that.points == 1 ? '.' : 's.')})
           .prependTo($card.find('.badges'));
-        if(consumed){
-          // Add the number badge to the badges div.
-          $number_badge
-            .text(that.card_number)
-            .attr({title: 'Card number '+that.card_number})
-            .prependTo($card);
-        }
+        // Add the number badge to the badges div.
+        $number_badge
+          .text(that.card_number)
+          .attr({title: 'Card number '+that.card_number})
+          .prependTo($card);
         // Update the DOM element's textContent and data if there were changes.
         if(titleTextContent != parsedTitle){
           $title.data('orig-title', titleTextContent); // store the non-mutilated title (with all of the estimates/time-spent in it).
         }
-        parsedTitle = $.trim(el._title.replace(reg,'$1').replace(regC,'$1').replace(regN,'$1'));
+        parsedTitle = $.trim(el._title.replace(reg,'$1').replace(regN,'$1'));
         el._title = parsedTitle;
         $title.data('parsed-title', parsedTitle); // save it to the DOM element so that both badge-types can refer back to it.
         $title[0].childNodes[1].textContent = parsedTitle;
@@ -682,9 +669,7 @@ function ListCard(el, identifier){
               var listCardHash = $card.get(0).listCard;
               if(listCardHash){
                 // The hash contains a ListCard object for each type of points (cpoints, points, possibly more in the future).
-                $.each(_pointsAttr, function(index, pointsAttr){
-                  listCardHash[pointsAttr].refresh();
-                });
+                listCardHash.refresh();
               }
             }
           }
@@ -693,12 +678,10 @@ function ListCard(el, identifier){
     });
   });
 
-  // The MutationObserver is only attached once per card (for the non-consumed-points ListCard) and that Observer will make the call
-  // to update BOTH types of points-badges.
-  if(!consumed){
-    var observerConfig = { childList: true, characterData: false, attributes: false, subtree: true };
-    cardShortIdObserver.observe(el, observerConfig);
-  }
+  // The MutationObserver is only attached once per card and that Observer will make the call
+  // to update
+  var observerConfig = { childList: true, characterData: false, attributes: false, subtree: true };
+  cardShortIdObserver.observe(el, observerConfig);
 
   setTimeout(that.refresh);
 };
@@ -750,7 +733,6 @@ function showExcelExport() {
     $.each(data['lists'], function(key, list) {
       var list_id = list["id"];
       s += '<tr><th colspan="3">' + list['name'] + '</th></tr>';
-
       $.each(data["cards"], function(key, card) {
         if (card["idList"] == list_id) {
           var title = card["name"];
