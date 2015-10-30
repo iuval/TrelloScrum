@@ -8,7 +8,7 @@
 }
 .board-header-btns .list-total{ /* only targets the board totals */
   line-height:30px;
-  color: #60c5f0;
+  color: #f6f6f6;
 }
 
 .list-total .cpoints{
@@ -31,6 +31,7 @@
   background-color: #006580 !important;
   border-color: #005b72 !important;
   border-bottom-color: #004b5f !important;
+  border-radius: 3px;
   color: #e1fafb !important;
   float: right;
   font-size: 11px;
@@ -42,12 +43,13 @@
 }
 
 .badge-number {
-  background-color: #c0392b !important;
+  background-color: #ee284d !important;
   border-color: #005b72 !important;
   border-bottom-color: #004b5f !important;
+  border-radius: 3px;
   color: #e1fafb !important;
   float: left;
-  font-size: 21px;
+  font-size: 15px;
   line-height: 16px;
   text-align: center;
   padding: 4px !important;
@@ -56,6 +58,21 @@
 .picker {
   float: right;
   padding-top: 5px;
+}
+
+.number-picker {
+  float: right;
+  padding-top: 5px;
+  background-color: #ee284d !important;
+  border-color: #005b72 !important;
+  border-bottom-color: #004b5f !important;
+  border-radius: 3px;
+  padding: 2px 5px !important;
+  margin-right: 5px;
+  font-size: 15px !important;
+  color: white;
+  font-weight:bold;
+  cursor: pointer;
 }
 
 .points-done-icon{

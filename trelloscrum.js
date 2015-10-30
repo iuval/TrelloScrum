@@ -27,7 +27,7 @@ var debounce = function (func, threshold, execAsap) {
     function delayed () {
       if (!execAsap)
         func.apply(obj, args);
-      timeout = null; 
+      timeout = null;
     };
 
     if (timeout)
@@ -56,8 +56,8 @@ S4T_SETTING_DEFAULTS[SETTING_NAME_ESTIMATES] = _pointSeq.join();
 refreshSettings(); // get the settings right away (may take a little bit if using Chrome cloud storage)
 
 //internals
-var reg = /((?:^|\s))\((\x3f|\d*\.?\d+)(\))\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by ()
-    regN = /((?:^|\s))\[(\x3f|\d*\.?\d+)(\])\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by []
+var reg = /((?:^|\s*?))\((\x3f|\d*\.?\d+)(\))\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by ()
+    regN = /((?:^|\s*?))\[(\x3f|\d*\.?\d+)(\])\s?/m, //parse regexp- accepts digits, decimals and '?', surrounded by []
     iconUrl, pointsDoneUrl,
   flameUrl, flame18Url,
   scrumLogoUrl, scrumLogo18Url;
@@ -135,7 +135,7 @@ var recalcListAndTotal = debounce(function($el){
 }, 500, false);
 
 var recalcTotalsObserver = new CrossBrowser.MutationObserver(function(mutations)
-{  
+{
   // Determine if the mutation event included an ACTUAL change to the list rather than
   // a modification caused by this extension making an update to points, etc. (prevents
   // infinite recursion).
@@ -176,6 +176,7 @@ var recalcTotalsObserver = new CrossBrowser.MutationObserver(function(mutations)
     if($editControls.length > 0)
     {
         showPointPicker($editControls.get(0));
+        showCardNumber($editControls.get(0));
     }
 });
 recalcTotalsObserver.observe(document.body, obsConfig);
@@ -185,31 +186,31 @@ function updateBurndownLink(){
     // Add the link for Burndown Charts
     //$('.s4tLink').remove();
     if($('.s4tLink').length === 0){
-    var buttons = "";
+      var buttons = "";
 
-    // Link for Burndown Charts
-    var linkSetting = S4T_SETTINGS[SETTING_NAME_LINK_STYLE];
-    if(linkSetting !== 'none'){
-      buttons += "<a id='burndownLink' class='s4tLink quiet ed board-header-btn dark-hover' href='#'>";
-      buttons += "<span class='icon-sm board-header-btn-icon'><img src='"+flameUrl+"' width='12' height='12'/></span>";
-      if(linkSetting !== 'icon'){
-        buttons += "<span class='text board-header-btn-text'>Burndown Chart</span>";
+      // Link for Burndown Charts
+      var linkSetting = S4T_SETTINGS[SETTING_NAME_LINK_STYLE];
+      if(linkSetting !== 'none'){
+        buttons += "<a id='burndownLink' class='s4tLink quiet ed board-header-btn dark-hover' href='#'>";
+        buttons += "<span class='icon-sm board-header-btn-icon'><img src='"+flameUrl+"' width='12' height='12'/></span>";
+        if(linkSetting !== 'icon'){
+          buttons += "<span class='text board-header-btn-text'>Burndown Chart</span>";
+        }
+        buttons += "</a>";
       }
+      // Link for settings
+      buttons += "<a id='scrumSettingsLink' class='s4tLink quiet ed board-header-btn dark-hover' href='#'>";
+      buttons += "<span class='icon-sm board-header-btn-icon'><img src='"+scrumLogoUrl+"' width='12' height='12' title='Settings: Scrum for Trello'/></span>";
+      //buttons += "<span class='text board-header-btn-text'>Settings</span>"; // too big :-/ icon only for now
       buttons += "</a>";
-    }
-    // Link for settings
-    buttons += "<a id='scrumSettingsLink' class='s4tLink quiet ed board-header-btn dark-hover' href='#'>";
-    buttons += "<span class='icon-sm board-header-btn-icon'><img src='"+scrumLogoUrl+"' width='12' height='12' title='Settings: Scrum for Trello'/></span>";
-    //buttons += "<span class='text board-header-btn-text'>Settings</span>"; // too big :-/ icon only for now
-    buttons += "</a>";
-    var showOnLeft = true;
-    if(showOnLeft){
-      $('.board-header-btns.left').last().after(buttons);
-    } else {
-      $('.board-header-btns.right,#board-header a').last().after(buttons);
-    }
-        $('#burndownLink').click(showBurndown);
-    $('#scrumSettingsLink').click(showSettings);
+      var showOnLeft = true;
+      if(showOnLeft){
+        $('.board-header-btns.left').last().after(buttons);
+      } else {
+        $('.board-header-btns.right,#board-header a').last().after(buttons);
+      }
+      $('#burndownLink').click(showBurndown);
+      $('#scrumSettingsLink').click(showSettings);
     }
 }
 
@@ -235,13 +236,12 @@ function showBurndown()
   var clearfix = $('<div/>', {class: 'clearfix'});
   var windowHeaderUtils = $('<div/>', {class: 'window-header-utils dialog-close-button'}).append( $('<a/>', {class: 'icon-lg icon-close dark-hover js-close-window', href: '#', title:'Close this dialog window.'}) );
   var iFrameWrapper = $('<div/>', {style: 'padding:10px; padding-top: 13px;'});
-    var flameIcon = $('<img/>', {style: 'position:absolute; margin-left: 20px; margin-top:15px;', src:flame18Url});
-    
-  var actualIFrame = $('<iframe/>', {frameborder: '0',
-             style: 'width: 670px; height: 512px;',
-             id: 'burndownFrame',
-             src: "https://www.burndownfortrello.com/s4t_burndownPopup.php?username="+encodeURIComponent(username)+"&shortLink="+encodeURIComponent(shortLink)+"&boardName="+encodeURIComponent(boardName)
-            });
+  var flameIcon = $('<img/>', {style: 'position:absolute; margin-left: 20px; margin-top:15px;', src:flame18Url});
+  var actualIFrame = $('<img/>', {
+    id: 'burndownFrame',
+    style: 'display: block; margin-left: auto; margin-right: auto;',
+    src: "https://docs.google.com/a/neonroots.com/spreadsheet/oimg?key=0Alxdup6EOJLadEdNcE40SEVnMnBobndHOWh4dk1nWUE&oid=1&zx=293f6o6jmtux"
+  });
   var loadingFrameIndicator = $('<span/>', {class: 'js-spinner', id: 'loadingBurndownFrame', style: 'position: absolute; left: 225px; top: 260px;'}).append($('<span/>', {class: 'spinner left', style: 'margin-right:4px;'})).append("Loading 'Burndown for Trello'...");
   iFrameWrapper.append(loadingFrameIndicator); // this will show that the iframe is loading... until it loads.
   iFrameWrapper.append(actualIFrame);
@@ -249,11 +249,14 @@ function showBurndown()
   $windowWrapper = $('.window-wrapper');
     $windowWrapper.click(ignoreClicks);
   $windowWrapper.empty().append(clearfix).append(flameIcon).append(windowHeaderUtils).append(iFrameWrapper);
-  $('#burndownFrame').load(function(){ $('#loadingBurndownFrame').remove(); actualIFrame.css("visibility", "visible"); }); // once the iframe loads, get rid of the loading indicator.
+  $('#burndownFrame').load(function(){
+    $('#loadingBurndownFrame').remove();
+    actualIFrame.css("visibility", "visible");
+  }); // once the iframe loads, get rid of the loading indicator.
   $('.window-header-utils a.js-close-window').click(hideBurndown);
     $(window).bind('resize', repositionBurndown);
     $('.window-overlay').bind('click', hideBurndown);
-    
+
     repositionBurndown();
 }
 
@@ -273,7 +276,7 @@ function showSettings()
     // Load the current settings (with defaults in case Settings haven't been set).
     var setting_link = S4T_SETTINGS[SETTING_NAME_LINK_STYLE];
     var setting_estimateSeq = S4T_SETTINGS[SETTING_NAME_ESTIMATES];
-  
+
     var settingsDiv = $('<div/>', {style: "padding:0px 10px;font-family:'Helvetica Neue', Arial, Helvetica, sans-serif;"});
     var iframeHeader = $('<h3/>', {style: 'text-align: center;'});
     iframeHeader.text('Scrum for Trello');
@@ -281,7 +284,7 @@ function showSettings()
     settingsHeader.text('Settings');
     var settingsInstructions = $('<div/>', {style: 'margin-bottom:10px'}).html('These settings affect how Scrum for Trello appears to <em>you</em> on all boards.  When you&apos;re done, remember to click "Save Settings" below.');
     var settingsForm = $('<form/>', {id: 'scrumForTrelloForm'});
-    
+
     // How the 'Burndown Chart' link should appear (if at all).
     var fieldset_burndownLink = $('<fieldset/>');
     var legend_burndownLink = $('<legend/>');
@@ -311,7 +314,7 @@ function showSettings()
       var label_none = $('<label/>', {for: 'link_none'});
       label_none.text('Disable completely');
       fieldset_burndownLink.append(burndownRadio_none).append(label_none).append("<br/>");
-    
+
     // Which estimate buttons should show up.
     var fieldset_estimateButtons = $('<fieldset/>', {style: 'margin-top:5px'});
     var legend_estimateButtons = $('<legend/>');
@@ -319,11 +322,11 @@ function showSettings()
     fieldset_estimateButtons.append(legend_estimateButtons);
       var explanation = $('<div/>').text("List out the values you want to appear on the estimate buttons, separated by commas. They can be whole numbers, decimals, or a question mark.");
       fieldset_estimateButtons.append(explanation);
-      
+
       var estimateFieldId = 'pointSequenceToUse';
       var estimateField = $('<input/>', {id: estimateFieldId, size: 40, val: setting_estimateSeq});
       fieldset_estimateButtons.append(estimateField);
-      
+
       var titleTextStr = "Original sequence is: " + _pointSeq.join();
       var restoreDefaultsButton = $('<button/>')
                       .text('restore to original values')
@@ -358,7 +361,7 @@ function showSettings()
     settingsForm.append(saveButton);
     settingsForm.append(savedIndicator);
   }
-  
+
   // Quick start instructions.
   var quickStartDiv = $('<div>\
     <h4 style="margin-top:0px;margin-bottom:0px">Getting started</h4>\
@@ -396,7 +399,7 @@ function showSettings()
     iframeObj.contents().find('body').append(settingsDiv);
   });
   iframeObj.attr('src', "about:blank"); // need to set this AFTER the .load() has been registered.
-  
+
   $('.window-header-utils a.js-close-window').click(hideBurndown);
     $(window).bind('resize', repositionBurndown);
     $('.window-overlay').bind('click', hideBurndown);
@@ -434,24 +437,27 @@ var ctto;
 function computeTotal(){
   clearTimeout(ctto);
   ctto = setTimeout(function(){
-    var $title = $('.board-header-btns.right,#board-header a');
+    var $title = $('.board-header .board-header-btns.mod-left');
     var $total = $title.children('.list-total').empty();
     if ($total.length == 0)
       $total = $('<span/>', {class: "list-total"}).appendTo($title);
 
       var score = 0;
       $("#board .list-header:not(:contains('DONE')) .list-total .points").each(function(){
-        score+=parseFloat(this.textContent)||0;
+        score += parseFloat(this.textContent) || 0;
       });
+      scote = round(score);
 
       var done_score = 0;
       $("#board .list-header:contains('DONE') .list-total .points").each(function(){
-        done_score+=parseFloat(this.textContent)||0;
+        done_score += parseFloat(this.textContent) || 0;
       });
-      var total_points = round(score+done_score)
-      total_points = total_points<0?0:total_points;
-      var scoreSpan = $('<span/>', {class: 'points'})
-        .text('T: '+total_points+' / D: '+round(done_score)+' / R: '+round(score)||'');
+      done_score = round(done_score);
+      var total_points = round(score + done_score),
+          total_points = total_points < 0 ? 0 : total_points,
+          percentage   = (done_score * 100) / total_points;
+          scoreSpan = $('<span/>', {class: 'points board-header-btn-text'})
+        .text('Done: '+ done_score +' of '+ total_points +' ('+ round(percentage) +'%), '+ score + ' remaining');
       $total.append(scoreSpan);
       updateBurndownLink(); // the burndown link and the total are on the same bar... so now they'll be in sync as to whether they're both there or not.
   });
@@ -519,7 +525,7 @@ function List(el){
       computeTotal();
     });
   };
-    
+
   this.refreshList = debounce(function(){
     readCard($list.find('.list-card:not(.placeholder)'));
     this.calc(); // readCard will call this.calc() if any of the cards get refreshed.
@@ -532,12 +538,13 @@ function List(el){
     // infinite recursion).
     $.each(mutations, function(index, mutation){
       var $target = $(mutation.target);
-      
+
       // Ignore a bunch of known elements that send mutation events.
       if(! ($target.hasClass('list-total')
           || $target.hasClass('list-title')
           || $target.hasClass('list-header')
           || $target.hasClass('badge-points')
+          || $target.hasClass('badge-number')
           || $target.hasClass('badges')
           || (typeof mutation.target.className == "undefined")
           ))
@@ -595,13 +602,14 @@ function ListCard(el){
     busy = true;
     clearTimeout(to);
     to = setTimeout(function(){
-      var $title=$card.find('a.list-card-title');
+      var $title = $card.find('a.list-card-title');
+      // card_number = $card.find('span.card-short-id').text();
       if(!$title[0])return;
       var titleTextContent = $title[0].childNodes[1].textContent;
       if(titleTextContent) el._title = titleTextContent;
-      
+
       // Get the stripped-down (parsed) version without the estimates, that was stored after the last change.
-      var parsedTitle = $title.data('parsed-title'); 
+      var parsedTitle = $title.data('parsed-title');
       if(titleTextContent != parsedTitle){
         // New card title, so we have to parse this new info to find the new amount of points.
         parsed=titleTextContent.match(reg);
@@ -619,16 +627,18 @@ function ListCard(el){
 
       clearTimeout(to2);
       to2 = setTimeout(function(){
+        // Add the number badge to the badges div.
+        if(that.card_number!=''){
+          $number_badge
+            .text(that.card_number)
+            .attr({title: 'Card number '+that.card_number})
+            .prependTo($card);
+        }
         // Add the badge (for this point-type: regular or consumed) to the badges div.
         $badge
           .text(that.points)
           .attr({title: 'This card has '+that.points+' storypoint' + (that.points == 1 ? '.' : 's.')})
           .prependTo($card.find('.badges'));
-        // Add the number badge to the badges div.
-        $number_badge
-          .text(that.card_number)
-          .attr({title: 'Card number '+that.card_number})
-          .prependTo($card);
         // Update the DOM element's textContent and data if there were changes.
         if(titleTextContent != parsedTitle){
           $title.data('orig-title', titleTextContent); // store the non-mutilated title (with all of the estimates/time-spent in it).
@@ -690,7 +700,7 @@ function ListCard(el){
 function showPointPicker(location) {
   if($(location).find('.picker').length) return;
   var $picker = $('<div/>', {class: "picker"}).appendTo('.card-detail-title .edit-controls');
-  
+
   var estimateSequence = (S4T_SETTINGS[SETTING_NAME_ESTIMATES]).split(',');
   for (var i in estimateSequence) $picker.append($('<span>', {class: "point-value"}).text(estimateSequence[i]).click(function(){
     var value = $(this).text();
@@ -700,13 +710,27 @@ function showPointPicker(location) {
     // replace our new
     $text[0].value=text.match(reg)?text.replace(reg, '('+value+') '):'('+value+') ' + text;
 
-    // then click our button so it all gets saved away
-    $(".card-detail-title .edit .js-save-edit").click();
-
     return false
   }))
 };
 
+function showCardNumber(location) {
+  if ($(location).find('.number-picker').length) return;
+  var $number_picker = $('<div/>', { class: "number-picker" }).appendTo('.card-detail-title .edit-controls');
+
+  var shortLink = document.location.href.match(/\/c\/.*/)[0];
+  var cardNumber = $('a.list-card-title[href*="'+ shortLink +'"] span.card-short-id').text();
+  cardNumber = cardNumber.slice(1, cardNumber.lenght);
+  $number_picker.text(cardNumber).click(function(){
+    var $text = $('.card-detail-title .edit textarea');
+    var text = $text.val();
+
+    // replace our new
+    $text[0].value = text.match(regN) ? text.replace(regN, '['+cardNumber+'] ') : '['+cardNumber+'] ' + text;
+
+    return false
+  });
+};
 
 //for export
 var $excel_btn,$excel_dl;
@@ -729,17 +753,19 @@ function showExcelExport() {
 
   $.getJSON($('.pop-over-list').find('.js-export-json').attr('href'), function(data) {
     var s = '<table id="export" border=1>';
-    s += '<tr><th>Points</th><th>Story</th><th>Description</th></tr>';
+    s += '<tr><th>#</th><th>Points</th><th>Story</th><th>Description</th></tr>';
     $.each(data['lists'], function(key, list) {
       var list_id = list["id"];
       s += '<tr><th colspan="3">' + list['name'] + '</th></tr>';
       $.each(data["cards"], function(key, card) {
         if (card["idList"] == list_id) {
           var title = card["name"];
+          var number_parsed = title.match(regN);
+          var number = number_parsed?number_parsed[2]:'';
           var parsed = title.match(reg);
-          var points = parsed?parsed[1]:'';
-          title = title.replace(reg,'');
-          s += '<tr><td>'+ points + '</td><td>' + title + '</td><td>' + card["desc"] + '</td></tr>';
+          var points = parsed?parsed[2]:'';
+          title = title.replace(reg,'').replace(regN,'');
+          s += '<tr><td>'+ number + '</td><td>'+ points + '</td><td>' + title + '</td><td>' + card["desc"] + '</td></tr>';
         }
       });
       s += '<tr><td colspan=3></td></tr>';
@@ -853,7 +879,7 @@ function refreshSettings(){
 function onSettingsUpdated(){
   // Temporary indication to the user that the settings were saved (might not always be on screen, but that's not a problem).
   $('iframe').contents().find('#s4tSaved').show().fadeOut(2000, "linear");
-  
+
   // Refresh the links because link-settings may have changed.
   $('.s4tLink').remove();
   updateBurndownLink();

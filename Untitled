@@ -1,0 +1,6 @@
+var match  = window.location.pathname.match('\/c\/(.*)\/'),
+    $title = $('a.list-card-title[href*='+match[1]+']'),
+    $card  = $title.parent('div.list-card-details'),
+    title  = $title.find('span.card-short-id').text() + $title.text();
+$card.find('card-detail-title .edit textarea').val(title);
+$card.find(".card-detail-title .edit .js-save-edit").click();
