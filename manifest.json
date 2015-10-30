@@ -1,6 +1,6 @@
 {
 	"name": "Number and Points for Trello",
-	"version": "2.1.5",
+	"version": "2.1.7",
 	"description": "Adds Scrum to your Trello",
 	"content_scripts": [
 		{

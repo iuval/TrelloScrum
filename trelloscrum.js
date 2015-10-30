@@ -716,11 +716,11 @@ function showPointPicker(location) {
 
 function showCardNumber(location) {
   if ($(location).find('.number-picker').length) return;
-  var $number_picker = $('<div/>', { class: "number-picker" }).appendTo('.card-detail-title .edit-controls');
+  var $number_picker = $('<div/>', { class: "number-picker" }).appendTo('.card-detail-title .edit-controls'),
+      shortLink = document.location.href.match(/\/c\/.*/)[0],
+      numberText = $('a.list-card-title[href*="'+ shortLink +'"] span.card-short-id').text(),
+      cardNumber = numberText.match(/(\d+)/)[0];
 
-  var shortLink = document.location.href.match(/\/c\/.*/)[0];
-  var cardNumber = $('a.list-card-title[href*="'+ shortLink +'"] span.card-short-id').text();
-  cardNumber = cardNumber.slice(1, cardNumber.lenght);
   $number_picker.text(cardNumber).click(function(){
     var $text = $('.card-detail-title .edit textarea');
     var text = $text.val();
